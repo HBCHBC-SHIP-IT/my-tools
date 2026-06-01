@@ -15,7 +15,7 @@ import tkinter as tk
 
 CONFIG_FILE = os.path.expanduser("~/.deepseek_widget_config.json")
 API_BASE = "https://api.deepseek.com"
-PROXY    = "socks5://127.0.0.1:10808"
+PROXY    = os.environ.get("HTTPS_PROXY", "") or os.environ.get("https_proxy", "")
 
 # ============================================================
 #  终端配色
@@ -51,14 +51,29 @@ def api_call(endpoint):
     url = f"{API_BASE}{endpoint}"
     cfg = load_json(CONFIG_FILE, {})
     api_key = cfg.get("api_key", "")
+
+    # 构建 curl 命令，智能代理：代理可用时使用，否则直连
     cmd = [
-        "curl", "-s", "-x", PROXY,
-        "--connect-timeout", "10", "--max-time", "20",
+        "curl", "-s",
+        "--connect-timeout", "8", "--max-time", "15",
         "-H", f"Authorization: Bearer {api_key}",
         url,
     ]
+
+    # 如果环境有 socks5 代理且端口开放，走代理；否则直连
+    if PROXY and PROXY.startswith("socks5://"):
+        host_port = PROXY.replace("socks5://", "")
+        import socket
+        host, _, port_str = host_port.partition(":")
+        try:
+            s = socket.create_connection((host, int(port_str)), timeout=3)
+            s.close()
+            cmd.insert(2, "-x"); cmd.insert(3, PROXY)
+        except Exception:
+            pass  # 代理不可用，直连
+
     result = subprocess.run(
-        cmd, capture_output=True, text=True, timeout=25,
+        cmd, capture_output=True, text=True, timeout=20,
         creationflags=subprocess.CREATE_NO_WINDOW,
     )
     stdout = result.stdout.strip()
