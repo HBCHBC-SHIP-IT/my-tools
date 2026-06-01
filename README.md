@@ -47,6 +47,6 @@ python deepseek_widget.py
 
 挂件自动读取 `HTTPS_PROXY` 环境变量：如果 socks5 代理端口可连接就使用代理，否则直连。适合间歇性使用 v2ray/Radmin VPN 的用户。
 
-## 配置存储
+## 配置
 
-API Key 保存在 `~/.deepseek_widget_config.json`，不上传 GitHub。
+首次运行后点击齿轮图标 ⚙ 输入 API Key，后续无需重复设置。
